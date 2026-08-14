@@ -1,0 +1,2255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Project Portfolio Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#0A0F1A;
+  --bg-elevated:#0F1622;
+  --panel:#141D2C;
+  --panel-2:#182236;
+  --border:#232E42;
+  --text:#E7ECF3;
+  --text-muted:#8B96A8;
+  --text-dim:#5B667A;
+  --amber:#F2A93B;
+  --cyan:#34D8C6;
+  --green:#34C77B;
+  --red:#E5484D;
+  --grid-line:rgba(255,255,255,0.05);
+  --font-display:'Space Grotesk',sans-serif;
+  --font-body:'Inter',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  min-height:100vh;
+  display:flex;
+}
+::selection{background:var(--amber);color:#0A0F1A;}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+
+/* ---------- Sidebar ---------- */
+.sidebar{
+  width:232px;
+  min-width:232px;
+  background:var(--bg-elevated);
+  border-right:1px solid var(--border);
+  padding:22px 16px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  position:sticky;
+  top:0;
+  height:100vh;
+}
+.brand{
+  font-family:var(--font-display);
+  font-weight:700;
+  font-size:15.5px;
+  letter-spacing:0.02em;
+  color:var(--text);
+  margin-bottom:2px;
+  padding:0 10px;
+}
+.brand small{
+  display:block;
+  font-family:var(--font-mono);
+  font-weight:400;
+  font-size:11px;
+  letter-spacing:0.08em;
+  color:var(--text-dim);
+  margin-top:3px;
+  text-transform:uppercase;
+}
+.nav-section-label{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--text-dim);
+  padding:18px 10px 8px;
+}
+.nav-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 10px;
+  border-radius:6px;
+  font-size:13.5px;
+  color:var(--text-muted);
+  cursor:pointer;
+  border:1px solid transparent;
+  transition:background 0.12s, color 0.12s;
+  user-select:none;
+}
+.nav-item:hover{background:var(--panel);color:var(--text);}
+.nav-item.active{
+  background:var(--panel-2);
+  color:var(--text);
+  border-color:var(--border);
+}
+.nav-icon {
+  width: 16px; height: 16px;
+  flex-shrink: 0;
+  color: var(--text-dim);
+  transition: color 0.12s, filter 0.12s;
+}
+.nav-item:hover .nav-icon { color: var(--text); }
+.nav-item.active .nav-icon {
+  color: var(--amber);
+  filter: drop-shadow(0 0 6px rgba(242,169,59,0.35));
+}
+.nav-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-foot{
+  margin-top:auto;
+  padding:12px 10px;
+  border-top:1px solid var(--border);
+  font-family:var(--font-mono);
+  font-size:11.5px;
+  color:var(--text-dim);
+  line-height:1.6;
+}
+
+/* ---------- Main ---------- */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;}
+.topbar{
+  padding:20px 32px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:24px;
+  flex-wrap:wrap;
+}
+.topbar h1{
+  font-family:var(--font-display);
+  font-size:21px;
+  font-weight:600;
+  letter-spacing:-0.01em;
+}
+.topbar .sub{
+  font-size:13px;
+  color:var(--text-muted);
+  margin-top:4px;
+  max-width:560px;
+}
+.status-strip{
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.export-btn{
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.export-btn:hover{
+  background: var(--panel-2);
+  border-color: var(--cyan);
+}
+.live-badge{
+  display:flex;align-items:center;gap:6px;
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:0.08em;
+  color:var(--green);
+  border:1px solid rgba(52,199,123,0.35);
+  background:rgba(52,199,123,0.08);
+  padding:4px 9px 4px 7px;
+  border-radius:20px;
+}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.8s infinite;}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,199,123,0.5);}70%{box-shadow:0 0 0 5px rgba(52,199,123,0);}100%{box-shadow:0 0 0 0 rgba(52,199,123,0);}}
+.timestamp{font-family:var(--font-mono);font-size:11.5px;color:var(--text-dim);}
+
+.breadcrumb{
+  padding:12px 32px;
+  font-family:var(--font-mono);
+  font-size:12px;
+  color:var(--text-dim);
+  border-bottom:1px solid var(--grid-line);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.breadcrumb .crumb{color:var(--text-muted);cursor:pointer;}
+.breadcrumb .crumb.current{color:var(--cyan);cursor:default;}
+.breadcrumb .crumb:hover:not(.current){color:var(--text);text-decoration:underline;}
+
+.content{padding:26px 32px 60px;flex:1;}
+.view{display:none;animation:fade 0.15s ease;}
+.view.active{display:block;}
+@keyframes fade{from{opacity:0;}to{opacity:1;}}
+
+h2.section-title{
+  font-family:var(--font-display);
+  font-size:15.5px;
+  font-weight:600;
+  margin-bottom:2px;
+}
+.section-desc{font-size:13px;color:var(--text-muted);margin-bottom:18px;max-width:640px;}
+
+/* ---------- Grids & Cards ---------- */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.kpi-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px 18px;
+}
+.kpi-label{font-family:var(--font-mono);font-size:11.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-dim);}
+.kpi-value{font-family:var(--font-display);font-size:26px;font-weight:600;margin-top:8px;color:var(--text);min-height:34px;line-height:1.2;}
+.kpi-value.amber{color:var(--amber);}
+.kpi-value.red{color:var(--red);}
+.kpi-value.green{color:var(--green);}
+.kpi-foot{font-size:12px;color:var(--text-muted);margin-top:6px;}
+
+.grid-2{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-bottom:22px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px;}
+.panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:18px 20px;
+}
+.panel h3{
+  font-family:var(--font-display);
+  font-size:14px;
+  font-weight:600;
+  margin-bottom:2px;
+}
+.panel .panel-desc{font-size:12px;color:var(--text-muted);margin-bottom:14px;}
+.chart-wrap{position:relative;height:220px;}
+
+/* ---------- Project list / RAG ---------- */
+.project-row{
+  display:grid;
+  grid-template-columns:26px 1.4fr 0.8fr 0.9fr 0.9fr 140px;
+  align-items:center;
+  gap:10px;
+  padding:11px 6px;
+  border-bottom:1px solid var(--grid-line);
+  cursor:pointer;
+  transition:background 0.12s;
+}
+.project-row:last-child{border-bottom:none;}
+.project-row > :last-child{
+  justify-self:end;
+}
+.project-row:hover{background:var(--panel-2);}
+.project-row.head{
+  cursor:default;
+  font-family:var(--font-mono);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.06em;
+  color:var(--text-dim);
+}
+.project-row.head > :nth-child(3),
+.project-row.head > :nth-child(5){text-align:right;}
+.project-row.head > :nth-child(4),
+.project-row.head > :nth-child(6){text-align:right;}
+.project-row.head:hover{background:transparent;}
+.rag-dot{width:10px;height:10px;border-radius:50%;}
+.rag-dot.green{background:var(--green);box-shadow:0 0 8px rgba(52,199,123,0.5);}
+.rag-dot.amber{background:var(--amber);box-shadow:0 0 8px rgba(242,169,59,0.5);}
+.rag-dot.red{background:var(--red);box-shadow:0 0 8px rgba(229,72,77,0.5);}
+.proj-name{font-weight:600;font-size:14px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+.proj-name small{display:block;font-family:var(--font-mono);font-size:11px;color:var(--text-dim);font-weight:400;width:100%;}
+.trend-arrow{font-size:12px; font-weight:700;}
+.trend-arrow.up{color:var(--green);}
+.trend-arrow.flat{color:var(--text-muted);}
+.trend-arrow.down{color:var(--red);}
+.metric{font-family:var(--font-mono);font-size:13px;color:var(--text-muted);}
+.status-pill{
+  font-family:var(--font-mono);
+  font-size:11px;
+  letter-spacing:0.03em;
+  padding:3px 8px;
+  border-radius:20px;
+  text-align:center;
+  white-space:nowrap;
+}
+.status-pill.green{background:rgba(52,199,123,0.12);color:var(--green);border:1px solid rgba(52,199,123,0.3);}
+.status-pill.amber{background:rgba(242,169,59,0.12);color:var(--amber);border:1px solid rgba(242,169,59,0.3);}
+.status-pill.red{background:rgba(229,72,77,0.12);color:var(--red);border:1px solid rgba(229,72,77,0.3);}
+.status-pill.muted{background:rgba(139,150,168,0.1);color:var(--text-dim);border:1px solid var(--border);}
+.status-pill.tag{background:var(--panel-2);color:var(--text-muted);border:1px solid var(--border);}
+
+/* ---------- Table ---------- */
+table.data-table{width:100%;border-collapse:collapse;font-size:13px;}
+table.data-table th{
+  text-align:left;
+  font-family:var(--font-mono);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  color:var(--text-dim);
+  padding:8px 10px;
+  border-bottom:1px solid var(--border);
+}
+table.data-table td{
+  padding:9px 10px;
+  border-bottom:1px solid var(--grid-line);
+  color:var(--text);
+}
+table.data-table tr:last-child td{border-bottom:none;}
+table.data-table td.mono, table.data-table th.mono{font-family:var(--font-mono);}
+
+/* ---------- Milestone pipeline ---------- */
+.pipeline{display:flex;align-items:center;margin:10px 0 4px;overflow-x:auto;}
+.pipeline-stage{
+  flex:1;
+  min-width:96px;
+  text-align:center;
+  position:relative;
+  padding:0 4px;
+}
+.pipeline-stage .stage-label{font-size:11.5px;color:var(--text-muted);margin-top:8px;line-height:1.3;}
+.pipeline-stage .stage-dot{
+  width:14px;height:14px;border-radius:50%;
+  margin:0 auto;
+  border:2px solid var(--border);
+  background:var(--bg-elevated);
+  position:relative;
+  z-index:2;
+}
+.pipeline-stage .stage-line{
+  position:absolute;top:6px;left:-50%;width:100%;height:2px;
+  background:var(--border);z-index:1;
+}
+.pipeline-stage:first-child .stage-line{display:none;}
+.pipeline-stage.done .stage-dot{background:var(--green);border-color:var(--green);}
+.pipeline-stage.done .stage-line{background:var(--green);}
+.pipeline-stage.current .stage-dot{border-color:var(--amber);background:var(--amber);}
+.pipeline-legend{display:flex;gap:16px;font-size:12px;color:var(--text-muted);margin-top:14px;}
+.pipeline-legend span{display:flex;align-items:center;gap:6px;}
+.pipeline-legend .sw{width:8px;height:8px;border-radius:50%;}
+
+/* ---------- Heat map ---------- */
+.heatmap{display:grid;grid-template-columns:120px repeat(4,1fr);gap:6px;}
+.heat-cell{
+  padding:10px 6px;
+  border-radius:6px;
+  text-align:center;
+  font-family:var(--font-mono);
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:transform 0.1s;
+}
+.heat-cell:hover{transform:scale(1.04);}
+.heat-cell.hdr{
+  background:transparent;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  color:var(--text-dim);
+  font-weight:400;
+  cursor:default;
+}
+.heat-cell.rowlabel{
+  background:transparent;
+  text-align:left;
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--text);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+}
+.heat-cell.rowlabel:hover{transform:none;color:var(--cyan);}
+
+/* ---------- Drawer ---------- */
+.drawer-overlay{
+  position:fixed;inset:0;background:rgba(5,8,14,0.6);
+  opacity:0;pointer-events:none;transition:opacity 0.2s;z-index:40;
+}
+.drawer-overlay.open{opacity:1;pointer-events:auto;}
+.drawer{
+  position:fixed;top:0;right:0;height:100vh;width:min(520px,92vw);
+  background:var(--bg-elevated);
+  border-left:1px solid var(--border);
+  transform:translateX(100%);
+  transition:transform 0.24s ease;
+  z-index:41;
+  display:flex;flex-direction:column;
+}
+.drawer.open{transform:translateX(0);}
+.drawer-head{
+  padding:20px 22px 14px;
+  border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:flex-start;
+}
+.drawer-head h2{font-family:var(--font-display);font-size:18px;font-weight:600;}
+.drawer-head .sub{font-family:var(--font-mono);font-size:12px;color:var(--text-dim);margin-top:4px;}
+.drawer-close{
+  background:var(--panel);border:1px solid var(--border);color:var(--text-muted);
+  width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:15px;line-height:1;
+}
+.drawer-close:hover{color:var(--text);}
+.drawer-tabs{display:flex;gap:2px;padding:12px 22px 0;border-bottom:1px solid var(--border);}
+.drawer-tab{
+  padding:8px 12px;font-size:13px;color:var(--text-muted);cursor:pointer;
+  border-bottom:2px solid transparent;font-family:var(--font-mono);
+}
+.drawer-tab.active{color:var(--cyan);border-color:var(--cyan);}
+.drawer-body{padding:18px 22px;overflow-y:auto;flex:1;}
+.drawer-panel{display:none;}
+.drawer-panel.active{display:block;}
+.mini-stat{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--grid-line);font-size:13px;}
+.mini-stat span:first-child{color:var(--text-muted);}
+.mini-stat span:last-child{font-family:var(--font-mono);color:var(--text);}
+.pending-note{
+  font-size:12.5px;color:var(--text-dim);background:var(--panel);
+  border:1px dashed var(--border);border-radius:8px;padding:12px 14px;margin-top:8px;
+}
+
+/* ---------- Floating add-project button ---------- */
+.fab{
+  position:fixed;
+  bottom:28px;right:32px;
+  width:52px;height:52px;
+  border-radius:50%;
+  background:var(--amber);
+  color:#241705;
+  border:none;
+  font-size:26px;
+  line-height:1;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  box-shadow:0 4px 18px rgba(242,169,59,0.35), 0 0 0 1px rgba(0,0,0,0.15);
+  z-index:38;
+  transition:transform 0.15s, box-shadow 0.15s;
+}
+.fab:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 8px 22px rgba(242,169,59,0.45);}
+.fab:active{transform:scale(0.96);}
+
+/* ---------- Add-project modal ---------- */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(5,8,14,0.65);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity 0.18s;
+  z-index:50;padding:24px;
+}
+.modal-overlay.open{opacity:1;pointer-events:auto;}
+.modal{
+  background:var(--bg-elevated);
+  border:1px solid var(--border);
+  border-radius:12px;
+  width:min(620px,100%);
+  max-height:88vh;
+  overflow-y:auto;
+  transform:translateY(10px) scale(0.98);
+  transition:transform 0.18s;
+}
+.modal-overlay.open .modal{transform:translateY(0) scale(1);}
+.modal-head{
+  padding:20px 24px 14px;
+  border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:flex-start;
+  position:sticky;top:0;background:var(--bg-elevated);
+}
+.modal-head h2{font-family:var(--font-display);font-size:18px;font-weight:600;}
+.modal-head .sub{font-size:12.5px;color:var(--text-muted);margin-top:4px;max-width:440px;}
+.modal-body{padding:20px 24px;}
+.form-section-label{
+  font-family:var(--font-mono);font-size:11px;text-transform:uppercase;
+  letter-spacing:0.08em;color:var(--text-dim);
+  margin:18px 0 10px;
+}
+.form-section-label:first-child{margin-top:0;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;}
+.form-row.full{grid-template-columns:1fr;}
+.form-field label{
+  display:block;font-size:12.5px;color:var(--text-muted);margin-bottom:5px;
+}
+.form-field input, .form-field select{
+  width:100%;
+  background:var(--panel);
+  border:1px solid var(--border);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:13px;
+  padding:8px 10px;
+  border-radius:6px;
+}
+.form-field input:focus, .form-field select:focus{border-color:var(--cyan);}
+.form-field.optional label::after{content:" (optional)";color:var(--text-dim);font-weight:400;}
+.modal-foot{
+  padding:16px 24px 22px;
+  display:flex;justify-content:flex-end;gap:10px;
+  border-top:1px solid var(--grid-line);
+}
+.btn{
+  font-family:var(--font-mono);
+  font-size:12px;
+  padding:9px 16px;
+  border-radius:7px;
+  cursor:pointer;
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:var(--text-muted);
+}
+.btn:hover{color:var(--text);}
+.btn.primary{
+  background:var(--amber);
+  color:#241705;
+  border-color:var(--amber);
+  font-weight:600;
+}
+.btn.primary:hover{filter:brightness(1.08);}
+.form-error{
+  font-size:12.5px;color:var(--red);margin-top:2px;min-height:14px;
+}
+
+/* ---------- Modal tabs (manual entry vs excel import) ---------- */
+.modal-tabs{display:flex;gap:2px;padding:14px 24px 0;border-bottom:1px solid var(--border);position:sticky;top:69px;background:var(--bg-elevated);}
+.modal-tab{
+  padding:9px 13px;font-size:13px;color:var(--text-muted);cursor:pointer;
+  border-bottom:2px solid transparent;font-family:var(--font-mono);
+}
+.modal-tab.active{color:var(--cyan);border-color:var(--cyan);}
+.modal-panel{display:none;}
+.modal-panel.active{display:block;}
+
+/* ---------- Excel import ---------- */
+.dropzone{
+  border:1.5px dashed var(--border);
+  border-radius:10px;
+  padding:26px 20px;
+  text-align:center;
+  cursor:pointer;
+  transition:border-color 0.15s, background 0.15s;
+}
+.dropzone:hover, .dropzone.dragover{border-color:var(--cyan);background:rgba(52,216,198,0.04);}
+.dropzone .dz-title{font-size:14px;color:var(--text);font-weight:600;margin-top:8px;}
+.dropzone .dz-sub{font-size:12.5px;color:var(--text-muted);margin-top:4px;}
+.dropzone input[type="file"]{display:none;}
+.template-row{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:12px;padding:10px 12px;
+  background:var(--panel);border:1px solid var(--border);border-radius:8px;
+  font-size:12px;color:var(--text-muted);
+}
+.import-status{margin-top:14px;font-size:12.5px;color:var(--text-muted);}
+.import-status.err{color:var(--red);}
+.import-preview{margin-top:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 16px;}
+.import-preview-head{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 0 8px;border-bottom:1px solid var(--border);
+}
+.import-preview-head .ip-name{font-family:var(--font-display);font-size:14.5px;font-weight:600;color:var(--text);}
+.import-preview-section{
+  font-family:var(--font-mono);font-size:10px;text-transform:uppercase;letter-spacing:0.06em;
+  color:var(--text-dim);margin:12px 0 2px;
+}
+
+.toast{
+  position:fixed;bottom:96px;right:32px;
+  background:var(--panel);border:1px solid var(--green);
+  color:var(--text);font-family:var(--font-mono);font-size:13px;
+  padding:10px 16px;border-radius:8px;
+  box-shadow:0 6px 20px rgba(0,0,0,0.4);
+  z-index:52;
+  transform:translateY(8px);opacity:0;
+  transition:transform 0.2s, opacity 0.2s;
+  pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* ---------- Advance Phase Button ---------- */
+.advance-btn{
+  padding:4px 10px;
+  font-size:11px;
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  color:var(--cyan);
+  border-radius:5px;
+  cursor:pointer;
+  font-family:var(--font-mono);
+  letter-spacing:0.02em;
+  transition:background 0.12s, border-color 0.12s;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.advance-btn:hover{
+  background:var(--panel);
+  border-color:var(--cyan);
+  color:var(--text);
+}
+.advance-btn:active{
+  transform:scale(0.96);
+}
+
+/* ---------- Collapsible Sidebar ---------- */
+.sidebar-toggle{
+  position:fixed;
+  top:50%;
+  transform:translateY(-50%);
+  left:220px;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:var(--panel);
+  border:1px solid var(--border);
+  color:var(--text-muted);
+  cursor:pointer;
+  z-index:45;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:12px;
+  transition:left 0.24s ease, background 0.12s, color 0.12s, transform 0.12s;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3);
+}
+.sidebar-toggle:hover{
+  background:var(--panel-2);
+  color:var(--text);
+}
+.sidebar-toggle.collapsed{
+  left:44px;
+  transform:translateY(-50%) rotate(180deg);
+  display:flex;
+}
+.sidebar.collapsed{
+  width:56px;
+  min-width:56px;
+  padding:22px 8px;
+}
+.sidebar.collapsed .brand,
+.sidebar.collapsed .nav-section-label,
+.sidebar.collapsed .sidebar-foot{
+  display:none;
+}
+.sidebar.collapsed .nav-item{
+  justify-content:center;
+  padding:12px 4px;
+}
+.sidebar.collapsed .nav-text{
+  display:none;
+}
+.sidebar.collapsed + .main .topbar{
+  padding-left:48px;
+}
+.sidebar.collapsed + .main .breadcrumb{
+  padding-left:48px;
+}
+.sidebar.collapsed + .main .content{
+  padding-left:48px;
+}
+
+/* responsive */
+@media print {
+  .sidebar, .sidebar-toggle, .fab, .export-btn { display: none !important; }
+  .main { margin: 0; }
+  body { background: #fff; color: #000; }
+  .kpi-card, .panel { border: 1px solid #ddd; background: #fff; box-shadow: none; color: #000; }
+  .text, .text-muted, .text-dim { color: #333 !important; }
+}
+
+@media(max-width:1000px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .grid-2,.grid-3{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .project-row{grid-template-columns:20px 1fr auto;}
+  .project-row span.metric{display:none;}
+  .project-row > :nth-child(4){display:none;}
+  .project-row > :nth-child(5){display:none;}
+  .advance-btn{display:none;}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:0.01ms !important;transition-duration:0.01ms !important;}
+}
+</style>
+<base target="_blank">
+</head>
+<body>
+
+<!-- ================= SIDEBAR ================= -->
+<button class="sidebar-toggle" id="sidebar-toggle" aria-label="Toggle sidebar" title="Collapse sidebar">◀</button>
+<nav class="sidebar" id="sidebar">
+  <div class="brand">PROJECT PORTFOLIO<small>Delivery Tracker · Executive View</small></div>
+  <div class="nav-section-label">Views</div>
+  <div class="nav-item active" data-view="portfolio">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+    <span class="nav-text">Portfolio Overview</span>
+  </div>
+  <div class="nav-item" data-view="milestones">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+    <span class="nav-text">Progress &amp; Milestones</span>
+  </div>
+  <div class="nav-item" data-view="sla">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><path d="M9 12l2 2 4-4"></path></svg>
+    <span class="nav-text">SLA Compliance</span>
+  </div>
+  <div class="nav-item" data-view="risk">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+    <span class="nav-text">Risk &amp; Early Warning</span>
+  </div>
+  <div class="nav-item" data-view="predictive">
+    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+    <span class="nav-text">Predictive Insights</span>
+  </div>
+  <div class="sidebar-foot">
+    Sample data included<br>
+    <span style="color:var(--text-dim);">Prototype v1</span>
+  </div>
+</nav>
+
+<!-- ================= MAIN ================= -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1>Project Portfolio Tracking Dashboard</h1>
+      <div class="sub">Progress, milestones, SLA compliance and early risk indicators — one view for leadership.</div>
+    </div>
+    <div class="status-strip">
+      <button class="export-btn" onclick="window.print()">Export to PDF</button>
+      <div class="live-badge"><span class="live-dot"></span>LIVE</div>
+      <div class="timestamp" id="clock"></div>
+    </div>
+  </div>
+
+  <div class="breadcrumb" id="breadcrumb">
+    <span class="crumb current">Portfolio Overview</span>
+  </div>
+
+  <div class="content">
+
+    <!-- ============ VIEW: PORTFOLIO OVERVIEW ============ -->
+    <section class="view active" id="view-portfolio">
+      <h2 class="section-title">Portfolio Overview</h2>
+      <div class="section-desc">Glanceability over detail — health, budget burn vs. progress, value at risk, and critical unmitigated items.</div>
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-label">Progress vs. Budget Burn</div>
+          <div class="kpi-value" id="kpi-progress">—</div>
+          <div class="kpi-foot" id="kpi-progress-foot">No tracked projects</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Milestone On-Time Rate</div>
+          <div class="kpi-value" id="kpi-milestone">—</div>
+          <div class="kpi-foot" id="kpi-milestone-foot">No milestone data</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Value at Risk (SLA)</div>
+          <div class="kpi-value" id="kpi-sla">—</div>
+          <div class="kpi-foot" id="kpi-sla-foot">Penalty exposure converted to currency</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Critical Risks (Unmitigated)</div>
+          <div class="kpi-value" id="kpi-risk">—</div>
+          <div class="kpi-foot" id="kpi-risk-foot">No risk data</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h3>Projects — RAG Status & Trajectory</h3>
+          <div class="panel-desc">Click a project to drill down into progress, milestone, financial, SLA and risk detail.</div>
+          <div class="project-row head">
+            <span></span><span>Project</span><span>Progress</span><span>Milestone</span><span>SLA Penalty</span><span>Overall</span>
+          </div>
+          <div id="portfolio-project-list"></div>
+        </div>
+        <div class="panel">
+          <h3>Top 3 At-Risk Projects</h3>
+          <div class="panel-desc">Exception-based — ranked by combined milestone, financial impact, and risk severity.</div>
+          <div id="top-risk-list"></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h3>Progress % vs. Plan</h3>
+          <div class="panel-desc">Units completed as % of planned target, by project.</div>
+          <div class="chart-wrap"><canvas id="chart-achv"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Milestone Achievement Trend</h3>
+          <div class="panel-desc">Portfolio-wide on-time milestone rate, QoQ.</div>
+          <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: MILESTONES ============ -->
+    <section class="view" id="view-milestones">
+      <h2 class="section-title">Progress &amp; Milestone Tracking</h2>
+      <div class="panel" style="margin-bottom:22px;">
+        <h3>Progress Tracking — Sample Projects</h3>
+        <div class="panel-desc">Core question answered: are we delivering enough, at the right pace, to meet our commitments?</div>
+        <div class="scroll-x">	
+        <table class="data-table">
+          <thead><tr>
+            <th>Project</th><th>Strategic Pillar</th><th>Metric</th><th class="mono">Planned</th><th class="mono">Completed</th><th class="mono">Achv %</th>
+            <th class="mono">Req. Pace</th><th class="mono">Cur. Pace</th><th>Status</th>
+          </tr></thead>
+          <tbody id="output-table-body"></tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 id="pipeline-title">Milestone Framework — Critical Path</h3>
+        <div class="panel-desc" id="pipeline-desc">A "Delayed" status on a critical-path milestone carries higher urgency than the same status on a milestone with float.</div>
+        <div class="pipeline" id="pipeline"></div>
+        <div class="pipeline-legend">
+          <span><span class="sw" style="background:var(--green)"></span>Complete</span>
+          <span><span class="sw" style="background:var(--amber)"></span>Current stage</span>
+          <span><span class="sw" style="background:var(--border)"></span>Upcoming</span>
+        </div>
+        <div class="pending-note" style="margin-top:16px;">On Track = within ±5% of plan · At Risk = 5–15% behind plan or pace below requirement · Delayed = more than 15% behind plan. Delays typically cluster around Procurement and Deployment — the stages with highest external-stakeholder dependency.</div>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: SLA ============ -->
+    <section class="view" id="view-sla">
+      <h2 class="section-title">SLA Compliance</h2>
+      <div class="section-desc">SLA penalties reduce the vendor's contract value directly — converting compliance into a financial governance indicator.</div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h3>Cumulative SLA Penalty by Project</h3>
+          <div class="panel-desc">% of contract value deducted. Cap: 20% across all categories.</div>
+          <div class="chart-wrap"><canvas id="chart-penalty"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Compliance Status</h3>
+          <div class="panel-desc">Compliant · At Risk (within penalty band) · Critical Breach (near/at cap).</div>
+          <div id="sla-status-list"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Key SLA Parameters &amp; Thresholds</h3>
+        <div class="panel-desc" id="sla-param-desc">Per the governing services agreement. Exclusions require joint verification.</div>
+        <div class="scroll-x">
+        <table class="data-table">
+          <thead><tr><th>SLA Parameter</th><th>Performance Requirement</th><th class="mono">Penalty Cap</th></tr></thead>
+          <tbody id="sla-param-body"></tbody>
+        </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: RISK ============ -->
+    <section class="view" id="view-risk">
+      <h2 class="section-title">Risk &amp; Early Warning</h2>
+      <div class="section-desc">Likelihood × Impact scoring, auto-routed by severity. Low/Medium resolve at team level; High triggers senior review; Critical escalates immediately to the Executive Sponsor.</div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <h3>Portfolio Heat Map — Open Flags by Severity</h3>
+        <div class="panel-desc">Click a project row to open its full risk detail.</div>
+        <div class="heatmap" id="heatmap"></div>
+      </div>
+
+      <div class="grid-3">
+        <div class="panel">
+          <h3>Risk Categories</h3>
+          <div class="panel-desc" style="margin-bottom:10px;">Six tracked categories, each with a defined mitigation path.</div>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Execution</td><td class="mono">Reallocation &amp; rescheduling</td></tr>
+              <tr><td>Resource</td><td class="mono">Cross-project rebalancing</td></tr>
+              <tr><td>Dependency</td><td class="mono">Fast-track upstream tasks</td></tr>
+              <tr><td>External</td><td class="mono">Proactive stakeholder engagement</td></tr>
+              <tr><td>SLA/Compliance</td><td class="mono">Root-cause resolution</td></tr>
+              <tr><td>Financial</td><td class="mono">Portfolio-level review</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h3>Escalation Matrix</h3>
+          <table class="data-table">
+            <thead><tr><th>Severity</th><th>Escalates To</th></tr></thead>
+            <tbody>
+              <tr><td><span class="status-pill green">Low</span></td><td>Functional Team Lead</td></tr>
+              <tr><td><span class="status-pill amber">Medium</span></td><td>Project Owner</td></tr>
+              <tr><td><span class="status-pill amber">High</span></td><td>Project Owner + Sr. Mgmt</td></tr>
+              <tr><td><span class="status-pill red">Critical</span></td><td>Executive Sponsor — immediate</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="panel">
+          <h3>RACI — Risk Escalation</h3>
+          <table class="data-table">
+            <tbody>
+              <tr><td>Executive Sponsor</td><td class="mono">Informed</td></tr>
+              <tr><td>Project Owner</td><td class="mono">Responsible / Accountable</td></tr>
+              <tr><td>Functional Team</td><td class="mono">Responsible</td></tr>
+              <tr><td>PMO Team</td><td class="mono">Consulted</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ VIEW: PREDICTIVE ============ -->
+    <section class="view" id="view-predictive">
+      <h2 class="section-title">Predictive Insights</h2>
+      <div class="section-desc">Forecasted Completion = Current Date + (Remaining Work ÷ Current Run-Rate). Transparent run-rate/trend methods — not ML-based in this prototype.</div>
+
+      <div class="panel" style="margin-bottom:22px;">
+        <h3>Insight Pipeline</h3>
+        <div class="panel-desc">From description to direction — e.g. "Project X is behind schedule" becomes "Project X requires 2 additional resources within 2 weeks to avoid missing the Q3 milestone."</div>
+        <div class="pipeline" id="insight-pipeline"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Forecasted Milestone Completion</h3>
+        <div class="scroll-x">
+        <table class="data-table">
+          <thead><tr><th>Project</th><th>Current Milestone</th><th class="mono">Target Deadline</th><th class="mono">Forecasted</th><th>Risk</th></tr></thead>
+          <tbody id="predictive-body"></tbody>
+        </table>
+        </div>
+        <div class="pending-note" style="margin-top:14px;">Where the projected date exceeds the target deadline, the platform auto-flags a forecasted risk before a milestone is technically missed.</div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ================= DRILL-DOWN DRAWER ================= -->
+<div class="drawer-overlay" id="drawer-overlay"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div>
+      <h2 id="drawer-title">Project</h2>
+      <div class="sub" id="drawer-sub">PROJECT VIEW</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-start;">
+      <button class="btn" id="drawer-edit" type="button" style="padding:6px 12px;font-size:12px;">Edit</button>
+      <button class="btn" id="drawer-delete" type="button" style="padding:6px 12px;font-size:12px;color:var(--red);border-color:rgba(229,72,77,0.4);">Delete</button>
+      <button class="drawer-close" id="drawer-close">✕</button>
+    </div>
+  </div>
+  <div class="drawer-tabs">
+    <div class="drawer-tab active" data-tab="output">Output & Financials</div>
+    <div class="drawer-tab" data-tab="milestone">Milestone</div>
+    <div class="drawer-tab" data-tab="sla">SLA</div>
+    <div class="drawer-tab" data-tab="risk">Risk</div>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-panel active" id="panel-output"></div>
+    <div class="drawer-panel" id="panel-milestone"></div>
+    <div class="drawer-panel" id="panel-sla"></div>
+    <div class="drawer-panel" id="panel-risk"></div>
+  </div>
+</aside>
+
+<!-- ================= ADD PROJECT ================= -->
+<button class="fab" id="fab-add" aria-label="Add new project" title="Add new project">+</button>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2>Add Project</h2>
+        <div class="sub">Onboard a new project into the portfolio. Leave a module's fields blank if that data isn't available yet — it will show as "pending" until you add it.</div>
+      </div>
+      <button class="drawer-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" data-modal-tab="manual">Manual entry</div>
+      <div class="modal-tab" data-modal-tab="import">Import from Excel</div>
+    </div>
+    <div class="modal-body">
+
+      <div class="modal-panel active" id="modal-panel-manual">
+      <form id="add-project-form" onkeydown="if(event.key==='Enter' && event.target.tagName!=='TEXTAREA'){event.preventDefault();document.getElementById('modal-submit').click();}">
+
+        <div class="form-section-label">Project Details & Alignment</div>
+        <div class="form-row full">
+          <div class="form-field">
+            <label for="f-name">Project name</label>
+            <input type="text" id="f-name" placeholder="e.g. Project Zephyr" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="f-strategic">Strategic Pillar</label>
+            <select id="f-strategic">
+              <option value="Revenue Growth">Revenue Growth</option>
+              <option value="Cost Optimization">Cost Optimization</option>
+              <option value="ESG / Sustainability">ESG / Sustainability</option>
+              <option value="Risk & Compliance">Risk & Compliance</option>
+              <option value="Digital Transformation">Digital Transformation</option>
+              <option value="Infrastructure">Infrastructure</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="f-trend">Current Trajectory</label>
+            <select id="f-trend">
+              <option value="flat">Stable</option>
+              <option value="up">Improving</option>
+              <option value="down">Deteriorating</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-field optional"><label for="f-contractvalue">Total Contract / Business Value ($)</label><input type="number" id="f-contractvalue" min="0" placeholder="e.g. 1500000"></div>
+        </div>
+
+        <div class="form-section-label">Financial & Progress Tracking (optional)</div>
+        <div class="form-row">
+          <div class="form-field optional"><label for="f-budget-alloc">Budget Allocated ($)</label><input type="number" id="f-budget-alloc" min="0" placeholder="e.g. 1000000"></div>
+          <div class="form-field optional"><label for="f-budget-spent">Budget Spent ($)</label><input type="number" id="f-budget-spent" min="0" placeholder="e.g. 450000"></div>
+        </div>
+        <div class="form-row full">
+          <div class="form-field optional">
+            <label for="f-metric">Progress metric</label>
+            <select id="f-metric">
+              <option value="Units">Units (generic)</option>
+              <option value="Tasks">Tasks</option>
+              <option value="Deliverables">Deliverables</option>
+              <option value="Story Points">Story Points</option>
+              <option value="Milestones">Milestones</option>
+              <option value="__custom">Custom…</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row full" id="metric-custom-row" style="display:none;">
+          <div class="form-field">
+            <label for="f-metric-custom">Custom metric name</label>
+            <input type="text" id="f-metric-custom" placeholder="e.g. Test Cases">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field optional"><label for="f-target">Planned amount</label><input type="number" id="f-target" min="0" placeholder="e.g. 600"></div>
+          <div class="form-field optional"><label for="f-installed">Completed amount</label><input type="number" id="f-installed" min="0" placeholder="e.g. 420"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field optional"><label for="f-reqrate">Required pace /day</label><input type="number" id="f-reqrate" min="0" placeholder="e.g. 8"></div>
+          <div class="form-field optional"><label for="f-currate">Current pace /day</label><input type="number" id="f-currate" min="0" placeholder="e.g. 6"></div>
+        </div>
+
+        <div class="form-section-label">Predictive Insights (optional)</div>
+        <div class="form-row">
+          <div class="form-field optional"><label for="f-pred-milestone">Target Milestone Name</label><input type="text" id="f-pred-milestone" placeholder="e.g. UAT Sign-off"></div>
+          <div class="form-field optional"><label for="f-pred-deadline">Target Deadline</label><input type="text" id="f-pred-deadline" placeholder="e.g. 15 Oct"></div>
+        </div>
+
+        <div class="form-section-label">Milestone (optional)</div>
+        <div class="form-row">
+          <div class="form-field optional">
+            <label for="f-stage">Current stage</label>
+            <select id="f-stage">
+              <option value="">—</option>
+              <option>Initiation</option>
+              <option>Planning</option>
+              <option>Procurement</option>
+              <option selected>Execution</option>
+              <option>Testing &amp; QA</option>
+              <option>Deployment</option>
+              <option>Closure</option>
+            </select>
+          </div>
+          <div class="form-field optional">
+            <label for="f-mstatus">Milestone status</label>
+            <select id="f-mstatus">
+              <option value="">—</option>
+              <option>On Track</option>
+              <option>At Risk</option>
+              <option>Delayed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-section-label">SLA Compliance (optional)</div>
+        <div class="form-row">
+          <div class="form-field optional"><label for="f-penalty">Cumulative penalty (% of contract value)</label><input type="number" id="f-penalty" min="0" max="20" step="0.1" placeholder="e.g. 3"></div>
+          <div class="form-field optional">
+            <label for="f-slastatus">Compliance status</label>
+            <select id="f-slastatus">
+              <option value="">—</option>
+              <option>Compliant</option>
+              <option>At Risk</option>
+              <option>Critical Breach</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-section-label">Risk &amp; Early Warning</div>
+        <div class="form-row">
+          <div class="form-field"><label for="f-critical">Critical flags</label><input type="number" id="f-critical" min="0" value="0"></div>
+          <div class="form-field"><label for="f-high">High flags</label><input type="number" id="f-high" min="0" value="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-field"><label for="f-medium">Medium flags</label><input type="number" id="f-medium" min="0" value="0"></div>
+          <div class="form-field"><label for="f-low">Low flags</label><input type="number" id="f-low" min="0" value="0"></div>
+        </div>
+
+        <div class="form-error" id="form-error"></div>
+      </form>
+      </div>
+
+      <div class="modal-panel" id="modal-panel-import">
+        <div class="dropzone" id="dropzone">
+          <div class="dz-title">Click to choose a file, or drag one here</div>
+          <div class="dz-sub">.xlsx, .xls or .csv — one file per project, with all its details inside</div>
+          <input type="file" id="f-excel" accept=".xlsx,.xls,.csv">
+        </div>
+        
+        <div class="template-row">
+          <span>Not sure of the format?</span>
+          <button class="btn" type="button" id="download-template">Download blank template</button>
+        </div>
+
+        <div class="import-status" id="import-status"></div>
+        <div class="import-preview" id="import-preview" style="display:none;"></div>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <div class="modal-foot-actions" data-foot="manual">
+        <button class="btn" id="modal-cancel" type="button">Cancel</button>
+        <button class="btn primary" id="modal-submit" type="button">Add project</button>
+      </div>
+      <div class="modal-foot-actions" data-foot="import" style="display:none;">
+        <button class="btn" id="modal-cancel-2" type="button">Cancel</button>
+        <button class="btn primary" id="import-confirm" type="button" disabled>Import project</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   DATA — sample projects (replace/extend via Add Project or Excel import)
+   ========================================================= 
+const PROJECTS = [
+  {
+    name:"Project A",
+    strategicPillar: "Revenue Growth",
+    trend: "flat",
+    contractValue: 2500000,
+    budget: { allocated: 1500000, spent: 1200000 },
+    output:{target:1200, installed:910, achv:76, reqRate:12, curRate:9, metric:"Deliverables", status:"At Risk"},
+    milestone:{stage:"Execution", status:"At Risk"},
+    sla:{penalty:0, status:"Compliant"},
+    risk:{critical:0, high:1, medium:2, low:3},
+    predictive:{milestone:"Phase 3 Rollout", deadline:"30 Sep", forecast:"", risk:""},
+    overall:"amber"
+  },
+  {
+    name:"Project B",
+    strategicPillar: "Digital Transformation",
+    trend: "up",
+    contractValue: 800000,
+    budget: { allocated: 600000, spent: 580000 },
+    output:{target:800, installed:720, achv:90, reqRate:9, curRate:9.5, metric:"Story Points", status:"On Track"},
+    milestone:{stage:"Testing & QA", status:"On Track"},
+    sla:{penalty:2, status:"At Risk"},
+    risk:{critical:1, high:2, medium:1, low:2},
+    predictive:{milestone:"UAT Sign-off", deadline:"15 Oct", forecast:"", risk:""},
+    overall:"amber"
+  },
+  {
+    name:"Project C",
+    strategicPillar: "Cost Optimization",
+    trend: "down",
+    contractValue: 4200000,
+    budget: { allocated: 3000000, spent: 2200000 },
+    output:{target:500, installed:275, achv:55, reqRate:6, curRate:4, metric:"Tasks", status:"Delayed"},
+    milestone:{stage:"Execution", status:"Delayed"},
+    sla:{penalty:7, status:"Critical Breach"},
+    risk:{critical:2, high:3, medium:1, low:0},
+    predictive:{milestone:"Production Go-Live", deadline:"30 Sep", forecast:"", risk:""},
+    overall:"red"
+  },
+  {
+    name:"Project D",
+    strategicPillar: "Infrastructure",
+    trend: "flat",
+    contractValue: 1200000,
+    budget: { allocated: 900000, spent: 150000 },
+    output:null,
+    milestone:null,
+    sla:null,
+    risk:{critical:3, high:2, medium:1, low:1},
+    predictive:null,
+    overall:"red"
+  }
+];
+*/
+const PROJECTS = [];
+const MILESTONE_STAGES = ["Initiation","Planning","Procurement","Execution","Testing & QA","Deployment","Closure"];
+
+const SLA_PARAMS = [
+  ["Milestone on-time delivery","≥95% of milestones on schedule","1%"],
+  ["Deliverable quality (defect-free)","≥98% pass first review","1%"],
+  ["Status report submission","100% within 24 hrs of due date","2%"],
+  ["Documentation completeness","≥99.5% of required docs submitted","3%"],
+  ["Issue / defect resolution","100% within 16 days of logging","1.5% each"],
+  ["Change request turnaround","≥90% acknowledged within 24 hrs","2%"],
+  ["Stakeholder query response","≥99.9% within 30 min (business hrs)","3%"],
+  ["Overall system/service availability","≥99.5% monthly uptime","4%"]
+];
+
+const INSIGHT_STAGES = ["Data Aggregation","Pattern Detection","Contextualization","Prioritization","Actionability"];
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function statusClass(status){
+  if(!status) return "muted";
+  const s = status.toLowerCase();
+  if(s.includes("on track") || s.includes("compliant") || s==="low" || s.includes("on time") || s.includes("complete")) return "green";
+  if(s.includes("at risk") || s.includes("medium")) return "amber";
+  if(s.includes("delayed") || s.includes("breach") || s.includes("high") || s.includes("critical") || s.includes("late") || s.includes("stalled")) return "red";
+  return "muted";
+}
+
+function fmt(n){ return n===null||n===undefined ? "—" : n.toLocaleString("en-US"); }
+function fmtMoney(n){ return n===null||n===undefined ? "—" : "$" + n.toLocaleString("en-US"); }
+
+function computeOverall(p){
+  if (p.milestone && p.milestone.stage === "Closure") return "green";
+  
+  let red = 0, amber = 0;
+  if(p.milestone){
+    if(p.milestone.status === "Delayed") red++;
+    else if(p.milestone.status === "At Risk") amber++;
+  }
+  if(p.sla){
+    const c = statusClass(p.sla.status);
+    if(c === "red") red++;
+    else if(c === "amber") amber++;
+  }
+  
+  if(p.predictive) {
+    if(p.predictive.risk === "High") red++;
+    else if(p.predictive.risk === "Medium") amber++;
+  }
+
+  if(p.risk.critical >= 2) red++;
+  else if(p.risk.critical >= 1 || p.risk.high >= 2) amber++;
+
+  if(red > 0) return "red";
+  if(amber > 0) return "amber";
+  return "green";
+}
+
+function recomputeOverall(){
+  PROJECTS.forEach(p => {
+    if (p.milestone && p.milestone.stage === "Closure") {
+      if (p.output && p.output.target) {
+        p.output.installed = p.output.target;
+        p.output.achv = 100;
+      }
+      p.milestone.status = "Complete";
+      if (p.sla) p.sla.status = "Complete";
+      if (p.predictive) p.predictive.risk = "Complete";
+      if (p.risk) { p.risk.critical = 0; p.risk.high = 0; p.risk.medium = 0; p.risk.low = 0; }
+    }
+    p.overall = computeOverall(p);
+  });
+}
+
+function updatePredictiveForecasts() {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  
+  PROJECTS.forEach(p => {
+    if (p.predictive && p.output && p.output.target > 0) {
+      const remaining = Math.max(0, p.output.target - (p.output.installed || 0));
+      
+      if (remaining === 0 || (p.milestone && p.milestone.stage === "Closure")) {
+        p.predictive.forecast = "Completed";
+        p.predictive.risk = "Low";
+      } else if (p.output.curRate > 0) {
+        const daysRemaining = Math.ceil(remaining / p.output.curRate);
+        const forecastDate = new Date(today.getTime() + (daysRemaining * 24 * 60 * 60 * 1000));
+        
+        p.predictive.forecast = forecastDate.toLocaleDateString("en-US", {day:"2-digit", month:"short"});
+        
+        if (p.predictive.deadline) {
+           let dlDate = new Date(`${p.predictive.deadline} ${currentYear}`);
+           if (!isNaN(dlDate.getTime()) && dlDate.getMonth() < today.getMonth() - 6) {
+             dlDate = new Date(`${p.predictive.deadline} ${currentYear + 1}`);
+           }
+           
+           if (!isNaN(dlDate.getTime())) {
+              const daysLate = Math.ceil((forecastDate - dlDate) / (1000 * 60 * 60 * 24));
+              if (daysLate > 14) p.predictive.risk = "High";
+              else if (daysLate > 0) p.predictive.risk = "Medium";
+              else p.predictive.risk = "Low";
+           }
+        }
+      } else {
+        p.predictive.forecast = "Stalled (Pace: 0)";
+        p.predictive.risk = "High";
+      }
+    }
+  });
+}
+
+function renderAll(){
+  updatePredictiveForecasts();
+  recomputeOverall();
+  renderKPIs();
+  renderPortfolioList();
+  renderTopRisk();
+  renderOutputTable();
+  renderPipeline();
+  renderSlaStatusList();
+  renderSlaParams();
+  renderHeatmap();
+  renderPredictive();
+  renderInsightPipeline();
+  buildCharts();
+}
+
+/* =========================================================
+   DYNAMIC KPI COMPUTATION
+   ========================================================= */
+function computeKPIs(){
+  let avgProgress = 0;
+  let totalAllocated = 0, totalSpent = 0;
+  
+  const tracked = PROJECTS.filter(p => p.output && p.output.achv !== undefined);
+  if(tracked.length > 0){
+    let sumProg = 0;
+    tracked.forEach(p => { sumProg += p.output.achv; });
+    avgProgress = Math.round(sumProg / tracked.length);
+  }
+  
+  PROJECTS.forEach(p => {
+    if(p.budget) {
+      totalAllocated += p.budget.allocated || 0;
+      totalSpent += p.budget.spent || 0;
+    }
+  });
+  let burnRate = totalAllocated > 0 ? Math.round((totalSpent / totalAllocated) * 100) : 0;
+
+  const withMilestone = PROJECTS.filter(p => p.milestone && p.milestone.status);
+  const onTime = withMilestone.filter(p => p.milestone.status === "On Track" || p.milestone.status === "Complete");
+  const milestoneRate = withMilestone.length > 0 ? Math.round((onTime.length / withMilestone.length) * 100) : 0;
+
+  let totalVar = 0;
+  let slaCount = 0;
+  PROJECTS.forEach(p => {
+    if(p.sla && p.contractValue && (!p.milestone || p.milestone.stage !== "Closure")) {
+      totalVar += (p.sla.penalty / 100) * p.contractValue;
+      slaCount++;
+    }
+  });
+
+  let totalCritical = 0, totalHigh = 0;
+  PROJECTS.forEach(p => {
+    if(p.risk && (!p.milestone || p.milestone.stage !== "Closure")){
+      totalCritical += p.risk.critical || 0;
+      totalHigh += p.risk.high || 0;
+    }
+  });
+
+  return {
+    progress: avgProgress, burn: burnRate,
+    milestone: { rate: milestoneRate, total: withMilestone.length, onTime: onTime.length },
+    valAtRisk: totalVar, slaCount: slaCount,
+    risk: { critical: totalCritical, high: totalHigh }
+  };
+}
+
+function computeMilestoneTrend(){
+  const withMilestone = PROJECTS.filter(p => p.milestone && p.milestone.status);
+  if(withMilestone.length === 0) return { labels: ["Q1","Q2","Q3"], data: [0,0,0] };
+  const early = withMilestone.filter(p => !p.output || p.output.achv < 33);
+  const mid = withMilestone.filter(p => p.output && p.output.achv >= 33 && p.output.achv < 66);
+  const late = withMilestone.filter(p => p.output && p.output.achv >= 66);
+  
+  const rate = arr => arr.length === 0 ? 0 : Math.round((arr.filter(p => p.milestone.status === "On Track" || p.milestone.status === "Complete").length / arr.length) * 100);
+  
+  return { labels: ["Early Stage","Mid Stage","Late Stage"], data: [rate(early), rate(mid), rate(late)] };
+}
+
+function renderKPIs(){
+  const kpi = computeKPIs();
+  
+  const progEl = document.getElementById("kpi-progress");
+  const progFoot = document.getElementById("kpi-progress-foot");
+  progEl.innerHTML = `<span style="font-size:22px">${kpi.progress}%</span> <span style="font-size:16px;color:var(--text-dim)">/</span> <span style="font-size:22px">${kpi.burn}%</span>`;
+  progEl.className = "kpi-value " + (kpi.burn > kpi.progress + 10 ? "red" : kpi.burn > kpi.progress ? "amber" : "green");
+  progFoot.textContent = `Avg Progress / Avg Budget Burn`;
+
+  const mileEl = document.getElementById("kpi-milestone");
+  const mileFoot = document.getElementById("kpi-milestone-foot");
+  if(kpi.milestone.total === 0){
+    mileEl.textContent = "—"; mileEl.className = "kpi-value"; mileFoot.textContent = "No milestone data";
+  } else {
+    mileEl.textContent = kpi.milestone.rate + "%";
+    mileEl.className = "kpi-value " + (kpi.milestone.rate >= 80 ? "green" : kpi.milestone.rate >= 60 ? "amber" : "red");
+    mileFoot.textContent = `${kpi.milestone.onTime} of ${kpi.milestone.total} projects on track`;
+  }
+
+  const slaEl = document.getElementById("kpi-sla");
+  const slaFoot = document.getElementById("kpi-sla-foot");
+  if(kpi.slaCount === 0){
+    slaEl.textContent = "—"; slaEl.className = "kpi-value"; slaFoot.textContent = "No SLA financial tracking";
+  } else {
+    let varStr = "";
+    if(kpi.valAtRisk >= 1000000) varStr = "$" + (kpi.valAtRisk/1000000).toFixed(2) + "M";
+    else if (kpi.valAtRisk >= 1000) varStr = "$" + (kpi.valAtRisk/1000).toFixed(0) + "k";
+    else varStr = "$" + kpi.valAtRisk;
+
+    slaEl.textContent = varStr;
+    slaEl.className = "kpi-value " + (kpi.valAtRisk > 500000 ? "red" : kpi.valAtRisk > 100000 ? "amber" : "green");
+    slaFoot.textContent = `Monetary exposure across ${kpi.slaCount} projects`;
+  }
+
+  const riskEl = document.getElementById("kpi-risk");
+  const riskFoot = document.getElementById("kpi-risk-foot");
+  if(kpi.risk.critical === 0){
+    riskEl.textContent = "0"; riskEl.className = "kpi-value green"; riskFoot.textContent = "No critical risk flags open";
+  } else {
+    riskEl.textContent = `${kpi.risk.critical}`;
+    riskEl.className = "kpi-value red";
+    riskFoot.textContent = `Requires immediate Executive intervention`;
+  }
+}
+
+/* =========================================================
+   PROJECT EDIT / DELETE / ADVANCE
+   ========================================================= */
+let editingProjectName = null;
+
+function openEditModal(projectName){
+  const p = PROJECTS.find(pr => pr.name === projectName);
+  if(!p) return;
+  editingProjectName = projectName;
+
+  document.getElementById("f-name").value = p.name;
+  document.getElementById("f-name").disabled = true;
+  document.getElementById("f-strategic").value = p.strategicPillar || "Revenue Growth";
+  document.getElementById("f-trend").value = p.trend || "flat";
+  document.getElementById("f-contractvalue").value = p.contractValue ?? "";
+  document.getElementById("f-budget-alloc").value = p.budget?.allocated ?? "";
+  document.getElementById("f-budget-spent").value = p.budget?.spent ?? "";
+  document.getElementById("f-metric").value = p.output?.metric || "Units";
+  document.getElementById("f-target").value = p.output?.target ?? "";
+  document.getElementById("f-installed").value = p.output?.installed ?? "";
+  document.getElementById("f-reqrate").value = p.output?.reqRate ?? "";
+  document.getElementById("f-currate").value = p.output?.curRate ?? "";
+  document.getElementById("f-stage").value = p.milestone?.stage || "";
+  document.getElementById("f-mstatus").value = p.milestone?.status || "";
+  document.getElementById("f-pred-milestone").value = p.predictive?.milestone || "";
+  document.getElementById("f-pred-deadline").value = p.predictive?.deadline || "";
+  document.getElementById("f-penalty").value = p.sla?.penalty ?? "";
+  document.getElementById("f-slastatus").value = p.sla?.status || "";
+  document.getElementById("f-critical").value = p.risk?.critical ?? 0;
+  document.getElementById("f-high").value = p.risk?.high ?? 0;
+  document.getElementById("f-medium").value = p.risk?.medium ?? 0;
+  document.getElementById("f-low").value = p.risk?.low ?? 0;
+
+  formError.textContent = "";
+  ["f-name","f-target","f-installed","f-penalty","f-reqrate","f-currate","f-contractvalue","f-budget-alloc","f-budget-spent","f-pred-milestone","f-pred-deadline"].forEach(clearFieldError);
+  switchModalTab("manual");
+
+  document.querySelector(".modal-head h2").textContent = "Edit Project";
+  document.getElementById("modal-submit").textContent = "Save changes";
+  modalOverlay.classList.add("open");
+}
+
+function deleteProject(projectName){
+  if(!confirm(`Delete "${projectName}" from the portfolio? This cannot be undone.`)) return;
+  const idx = PROJECTS.findIndex(p => p.name === projectName);
+  if(idx > -1){
+    PROJECTS.splice(idx, 1);
+    renderAll();
+    closeDrawer();
+    showToast(`${projectName} deleted from portfolio`);
+  }
+}
+
+function advanceProjectPhase(projectName){
+  const p = PROJECTS.find(pr => pr.name === projectName);
+  if(!p) return;
+
+  const currentStage = p.milestone?.stage || "";
+  const stageIdx = MILESTONE_STAGES.indexOf(currentStage);
+
+  if(stageIdx === -1){
+    p.milestone = { stage: MILESTONE_STAGES[0], status: "On Track" };
+    recomputeOverall(); renderAll();
+    showToast(`${projectName} started at ${MILESTONE_STAGES[0]}`);
+    if (document.getElementById("drawer").classList.contains("open")) { openDrawer(projectName, "milestone"); }
+    return;
+  }
+  if(stageIdx >= MILESTONE_STAGES.length - 1){
+    showToast(`${projectName} is already at the final stage (${currentStage})`);
+    return;
+  }
+  const nextStage = MILESTONE_STAGES[stageIdx + 1];
+  p.milestone.stage = nextStage;
+  p.milestone.status = "On Track";
+  recomputeOverall();
+  renderAll();
+  showToast(`${projectName} advanced to ${nextStage}`);
+
+  if (document.getElementById("drawer").classList.contains("open")) {
+    openDrawer(projectName, "milestone");
+  }
+}
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+function getTrendIcon(trend){
+  if(trend === "up") return `<span class="trend-arrow up" title="Improving">↑</span>`;
+  if(trend === "down") return `<span class="trend-arrow down" title="Deteriorating">↓</span>`;
+  return `<span class="trend-arrow flat" title="Stable">→</span>`;
+}
+
+function renderPortfolioList(){
+  const wrap = document.getElementById("portfolio-project-list");
+  wrap.innerHTML = PROJECTS.map(p => {
+    const currentStage = p.milestone?.stage || "";
+    const stageIdx = MILESTONE_STAGES.indexOf(currentStage);
+    const canAdvance = currentStage && stageIdx >= 0 && stageIdx < MILESTONE_STAGES.length - 1;
+    return `
+    <div class="project-row" data-project="${p.name}">
+      <span class="rag-dot ${p.overall}"></span>
+      <span class="proj-name">
+        ${p.name} ${getTrendIcon(p.trend)}
+        <small>${p.milestone ? p.milestone.stage : "Not yet tracked"}</small>
+      </span>
+      <span class="metric">${p.output ? p.output.achv + "%" : "—"}</span>
+      <span><span class="status-pill ${statusClass(p.milestone?.status)}">${p.milestone ? p.milestone.status : "Pending"}</span></span>
+      <span class="metric">${p.sla ? p.sla.penalty + "%" : "—"}</span>
+      <span style="display:flex;gap:6px;align-items:center;">
+        ${canAdvance ? `<button class="btn advance-btn" data-project="${p.name}" title="Move to ${MILESTONE_STAGES[stageIdx+1]}">Next ▸</button>` : ""}
+        <span class="status-pill ${p.overall}">${p.overall==="red"?"Critical":p.overall==="amber"?"At Risk":"On Track"}</span>
+      </span>
+    </div>
+  `}).join("");
+
+  document.querySelectorAll(".project-row[data-project]").forEach(row=>{
+    row.addEventListener("click", (e)=>{
+      if(e.target.closest('.advance-btn')) return;
+      openDrawer(row.dataset.project);
+    });
+  });
+
+  document.querySelectorAll(".advance-btn").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      advanceProjectPhase(btn.dataset.project);
+    });
+  });
+}
+
+function renderTopRisk(){
+  const ranked = [...PROJECTS].filter(p => p.overall !== "green" && p.milestone?.stage !== "Closure").sort((a,b)=>{
+    const score = proj => {
+      const financialImpact = proj.contractValue ? (proj.contractValue/1000000) : 0;
+      return ((proj.risk?.critical||0)*3 + (proj.risk?.high||0)*2 + (proj.sla?proj.sla.penalty:10)*0.3 + financialImpact + (proj.overall==="red"?5:proj.overall==="amber"?2:0));
+    };
+    return score(b)-score(a);
+  }).slice(0,3);
+
+  const wrap = document.getElementById("top-risk-list");
+  if(ranked.length === 0){
+    wrap.innerHTML = `<div class="pending-note" style="margin-top:8px;">No at-risk projects currently — portfolio is green.</div>`;
+    return;
+  }
+  wrap.innerHTML = ranked.map((p,i)=>`
+    <div class="project-row" data-project="${p.name}" style="grid-template-columns:26px 1fr 90px;">
+      <span class="rag-dot ${p.overall}"></span>
+      <span class="proj-name">${i+1}. ${p.name} ${getTrendIcon(p.trend)}<small>${p.risk?.critical||0} critical · ${p.risk?.high||0} high flags open</small></span>
+      <span><span class="status-pill ${p.overall}">${p.overall==="red"?"Critical":"At Risk"}</span></span>
+    </div>
+  `).join("");
+  wrap.querySelectorAll(".project-row").forEach(row=>{
+    row.addEventListener("click", ()=> openDrawer(row.dataset.project));
+  });
+}
+
+function renderOutputTable(){
+  const body = document.getElementById("output-table-body");
+  body.innerHTML = PROJECTS.map(p=>{
+    if(!p.output || p.output.target === null || p.output.target === undefined){
+      return `<tr><td>${p.name}</td><td>${p.strategicPillar||"—"}</td><td class="mono" colspan="6" style="color:var(--text-dim)">Data pending</td><td><span class="status-pill muted">Pending</span></td></tr>`;
+    }
+    const o = p.output;
+    let displayStatus = o.status;
+    if (p.milestone && p.milestone.stage === "Closure") { displayStatus = "Complete"; }
+
+    return `<tr>
+      <td>${p.name}</td>
+      <td><span class="status-pill tag">${p.strategicPillar||"—"}</span></td>
+      <td>${o.metric || "Units"}</td>
+      <td class="mono">${fmt(o.target)}</td>
+      <td class="mono">${fmt(o.installed)}</td>
+      <td class="mono">${o.achv}%</td>
+      <td class="mono">${fmt(o.reqRate)}/d</td>
+      <td class="mono">${fmt(o.curRate)}/d</td>
+      <td><span class="status-pill ${statusClass(displayStatus)}">${displayStatus}</span></td>
+    </tr>`;
+  }).join("");
+}
+
+function renderPipeline(){
+  const wrap = document.getElementById("pipeline");
+  const withMilestone = PROJECTS.filter(p => p.milestone && p.milestone.stage);
+  if(withMilestone.length === 0){
+    wrap.innerHTML = `<div class="pending-note">No projects with milestone data yet. Add a project to see the pipeline.</div>`;
+    return;
+  }
+  const target = PROJECTS.find(p => p.milestone && p.milestone.stage !== "Closure" && p.overall === "red")
+    || PROJECTS.find(p => p.milestone && p.milestone.stage !== "Closure" && p.overall === "amber")
+    || PROJECTS.find(p => p.milestone && p.milestone.stage !== "Closure")
+    || PROJECTS.find(p => p.milestone);
+  const currentIdx = target && target.milestone ? MILESTONE_STAGES.indexOf(target.milestone.stage) : 3;
+  wrap.innerHTML = MILESTONE_STAGES.map((s,i)=>{
+    let cls = i < currentIdx ? "done" : i===currentIdx ? "current" : "";
+    return `<div class="pipeline-stage ${cls}"><div class="stage-line"></div><div class="stage-dot"></div><div class="stage-label">${s}</div></div>`;
+  }).join("");
+
+  const titleEl = document.getElementById("pipeline-title");
+  const descEl = document.getElementById("pipeline-desc");
+  if(titleEl && descEl && target){
+    titleEl.textContent = `Milestone Framework — ${target.name}`;
+    descEl.textContent = `Current stage: ${target.milestone.stage} · Status: ${target.milestone.status} · ${target.overall === "red" ? "Critical" : target.overall === "amber" ? "At Risk" : "On Track"}`;
+  }
+}
+
+function renderInsightPipeline(){
+  const wrap = document.getElementById("insight-pipeline");
+  const hasPredictive = PROJECTS.some(p => p.predictive);
+  const hasRisk = PROJECTS.some(p => p.risk && (p.risk.critical > 0 || p.risk.high > 0));
+  const hasOutput = PROJECTS.some(p => p.output);
+  wrap.innerHTML = INSIGHT_STAGES.map((s,i)=>{
+    let cls = "";
+    if(i === 0) cls = "done"; 
+    else if(i === 1) cls = hasOutput || hasRisk ? "done" : "";
+    else if(i === 2) cls = hasRisk ? "done" : hasOutput ? "current" : "";
+    else if(i === 3) cls = hasPredictive ? "done" : hasRisk ? "current" : "";
+    else if(i === 4) cls = hasPredictive ? "current" : "";
+    return `<div class="pipeline-stage ${cls}"><div class="stage-line"></div><div class="stage-dot"></div><div class="stage-label">${s}</div></div>`;
+  }).join("");
+}
+
+function renderSlaStatusList(){
+  const wrap = document.getElementById("sla-status-list");
+  wrap.innerHTML = PROJECTS.map(p=>{
+    if(!p.sla){ return `<div class="mini-stat"><span>${p.name}</span><span><span class="status-pill muted">Pending</span></span></div>`; }
+    return `<div class="mini-stat"><span>${p.name}</span><span><span class="status-pill ${statusClass(p.sla.status)}">${p.sla.status}</span>&nbsp; ${p.sla.penalty}%</span></div>`;
+  }).join("") + `<div class="pending-note" style="margin-top:12px;">Total penalties across all categories capped at 20% of contract value.</div>`;
+}
+
+function renderSlaParams(){
+  const body = document.getElementById("sla-param-body");
+  body.innerHTML = SLA_PARAMS.map(r=>`<tr><td>${r[0]}</td><td class="mono">${r[1]}</td><td class="mono">${r[2]}</td></tr>`).join("");
+}
+
+function heatColor(v, max){
+  if(v===0) return "rgba(139,150,168,0.06)";
+  const t = Math.min(v/max, 1);
+  const r1=[242,169,59], r2=[229,72,77];
+  const r = Math.round(r1[0]+(r2[0]-r1[0])*t);
+  const g = Math.round(r1[1]+(r2[1]-r1[1])*t);
+  const b = Math.round(r1[2]+(r2[2]-r1[2])*t);
+  return `rgba(${r},${g},${b},${0.15+0.55*t})`;
+}
+
+function renderHeatmap(){
+  const wrap = document.getElementById("heatmap");
+  const sevs = ["critical","high","medium","low"];
+  let html = `<div class="heat-cell hdr"></div>` + sevs.map(s=>`<div class="heat-cell hdr">${s}</div>`).join("");
+  PROJECTS.forEach(p=>{
+    html += `<div class="heat-cell rowlabel" data-project="${p.name}">${p.name}</div>`;
+    sevs.forEach(s=>{
+      const v = p.risk ? p.risk[s] : 0;
+      html += `<div class="heat-cell" data-project="${p.name}" style="background:${heatColor(v,3)};color:${v>0?'#fff':'var(--text-dim)'}">${v}</div>`;
+    });
+  });
+  wrap.innerHTML = html;
+  wrap.querySelectorAll("[data-project]").forEach(cell=>{ cell.addEventListener("click", ()=> openDrawer(cell.dataset.project, "risk")); });
+}
+
+function renderPredictive(){
+  const body = document.getElementById("predictive-body");
+  body.innerHTML = PROJECTS.map(p=>{
+    if(!p.predictive) return `<tr><td>${p.name}</td><td colspan="4" style="color:var(--text-dim)">Not yet in predictive scope</td></tr>`;
+    const pr = p.predictive;
+    return `<tr>
+      <td>${p.name}</td><td>${pr.milestone}</td><td class="mono">${pr.deadline}</td>
+      <td class="mono">${pr.forecast || '<span style="color:var(--text-dim)">Awaiting progress data</span>'}</td>
+      <td><span class="status-pill ${statusClass(pr.risk)}">${pr.risk || "Pending"}</span></td>
+    </tr>`;
+  }).join("");
+}
+
+/* =========================================================
+   CHARTS
+   ========================================================= */
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.color = "#8B96A8";
+Chart.defaults.font.size = 11;
+
+let chartAchv, chartTrend, chartPenalty;
+
+function buildCharts(){
+  const withOutput = PROJECTS.filter(p=>p.output);
+  const withSla = PROJECTS.filter(p=>p.sla);
+
+  if(chartAchv) chartAchv.destroy();
+  if(chartTrend) chartTrend.destroy();
+  if(chartPenalty) chartPenalty.destroy();
+
+  chartAchv = new Chart(document.getElementById("chart-achv"), {
+    type:"bar",
+    data:{
+      labels:withOutput.map(p=>p.name),
+      datasets:[{
+        label:"Achievement %",
+        data:withOutput.map(p=>p.output.achv),
+        backgroundColor:withOutput.map(p=>p.overall==="red"?"#E5484D":p.overall==="amber"?"#F2A93B":"#34C77B"),
+        borderRadius:4,
+        maxBarThickness:56
+      }]
+    },
+    options:{ plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true, max:100, grid:{color:"rgba(255,255,255,0.05)"}, ticks:{callback:v=>v+"%"}}, x:{grid:{display:false}} } }
+  });
+
+  const milestoneStats = computeMilestoneTrend();
+  chartTrend = new Chart(document.getElementById("chart-trend"), {
+    type:"line",
+    data:{
+      labels:milestoneStats.labels,
+      datasets:[{
+        label:"On-Time Achievement %",
+        data:milestoneStats.data,
+        borderColor:"#34D8C6",
+        backgroundColor:"rgba(52,216,198,0.12)",
+        fill:true,
+        tension:0.35,
+        pointBackgroundColor:"#34D8C6",
+        pointRadius:4
+      }]
+    },
+    options:{ plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true, max:100, grid:{color:"rgba(255,255,255,0.05)"}, ticks:{callback:v=>v+"%"}}, x:{grid:{display:false}} } }
+  });
+
+  chartPenalty = new Chart(document.getElementById("chart-penalty"), {
+    type:"bar",
+    data:{
+      labels:withSla.map(p=>p.name),
+      datasets:[{
+        label:"SLA Penalty %",
+        data:withSla.map(p=>p.sla.penalty),
+        backgroundColor:withSla.map(p=>statusClass(p.sla.status)==="red"?"#E5484D":statusClass(p.sla.status)==="amber"?"#F2A93B":"#34C77B"),
+        borderRadius:4,
+        maxBarThickness:56
+      }]
+    },
+    options:{ plugins:{legend:{display:false}}, scales:{ y:{beginAtZero:true, max:20, grid:{color:"rgba(255,255,255,0.05)"}, ticks:{callback:v=>v+"%"}}, x:{grid:{display:false}} } }
+  });
+}
+
+/* =========================================================
+   DRAWER (drill-down)
+   ========================================================= */
+function openDrawer(projectName, defaultTab){
+  const p = PROJECTS.find(pr=>pr.name===projectName);
+  if(!p) return;
+  document.getElementById("drawer-title").textContent = p.name;
+  document.getElementById("drawer-sub").textContent = "PROJECT VIEW · PORTFOLIO > " + p.name.toUpperCase();
+
+  const currentStage = p.milestone?.stage || "Not started";
+  const currentIdx = MILESTONE_STAGES.indexOf(currentStage);
+  const pipeHtml = MILESTONE_STAGES.map((s,i)=>{
+    let cls = i < currentIdx ? "done" : i===currentIdx ? "current" : "";
+    return `<div class="pipeline-stage ${cls}"><div class="stage-line"></div><div class="stage-dot"></div><div class="stage-label">${s}</div></div>`;
+  }).join("");
+
+  let budgetHtml = p.budget && p.budget.allocated ? `
+    <div class="mini-stat" style="margin-top:12px;border-top:2px solid var(--border);padding-top:12px;"><span>Contract Value</span><span>${fmtMoney(p.contractValue)}</span></div>
+    <div class="mini-stat"><span>Budget Allocated</span><span>${fmtMoney(p.budget.allocated)}</span></div>
+    <div class="mini-stat"><span>Budget Spent</span><span>${fmtMoney(p.budget.spent)} (${Math.round((p.budget.spent/p.budget.allocated)*100)}%)</span></div>
+  ` : '';
+
+  document.getElementById("panel-output").innerHTML = `
+    <div class="mini-stat"><span>Strategic Alignment</span><span><span class="status-pill tag">${p.strategicPillar || "—"}</span></span></div>
+    <div class="mini-stat"><span>Trajectory</span><span>${p.trend === "up" ? "Improving ↑" : p.trend === "down" ? "Deteriorating ↓" : "Stable →"}</span></div>
+    ${p.output ? `
+    <div class="mini-stat" style="margin-top:12px;border-top:2px solid var(--border);padding-top:12px;"><span>Metric</span><span>${p.output.metric || "Units"}</span></div>
+    <div class="mini-stat"><span>Planned</span><span>${fmt(p.output.target)}</span></div>
+    <div class="mini-stat"><span>Completed</span><span>${fmt(p.output.installed)}</span></div>
+    <div class="mini-stat"><span>Progress</span><span>${p.output.achv}%</span></div>
+    <div class="mini-stat"><span>Required pace</span><span>${fmt(p.output.reqRate)}/day</span></div>
+    <div class="mini-stat"><span>Current pace</span><span>${fmt(p.output.curRate)}/day</span></div>
+    <div class="mini-stat"><span>Output Status</span><span><span class="status-pill ${statusClass(p.output.status)}">${p.output.status}</span></span></div>
+    ` : `<div class="pending-note" style="margin-top:12px;">Progress data pending — not yet tracked.</div>`}
+    ${budgetHtml}
+  `;
+
+  const currentStageIdx = p.milestone ? MILESTONE_STAGES.indexOf(p.milestone.stage) : -1;
+  const canAdvanceDrawer = currentStageIdx >= 0 && currentStageIdx < MILESTONE_STAGES.length - 1;
+  const nextStageName = canAdvanceDrawer ? MILESTONE_STAGES[currentStageIdx + 1] : "";
+
+  document.getElementById("panel-milestone").innerHTML = p.milestone ? `
+    <div style="margin-bottom:14px;">${pipeHtml}</div>
+    <div class="mini-stat"><span>Current stage</span><span>${p.milestone.stage}</span></div>
+    <div class="mini-stat"><span>Status</span><span><span class="status-pill ${statusClass(p.milestone.status)}">${p.milestone.status}</span></span></div>
+    ${canAdvanceDrawer ? `<div style="margin:14px 0;"><button class="btn primary" id="drawer-advance-phase" style="width:100%;padding:10px 16px;font-size:13px;">Advance Phase to ${nextStageName}</button></div>` : ""}
+    <div class="pending-note">Criticality overlay: a Delayed status on a critical-path milestone carries higher urgency.</div>
+  ` : `
+    <div class="pending-note">Milestone tracking pending for this project.</div>
+    <div style="margin:14px 0;"><button class="btn primary" id="drawer-advance-phase" style="width:100%;padding:10px 16px;font-size:13px;">Start Tracking at ${MILESTONE_STAGES[0]}</button></div>
+  `;
+
+  const drawerAdvanceBtn = document.getElementById("drawer-advance-phase");
+  if(drawerAdvanceBtn) drawerAdvanceBtn.addEventListener("click", ()=> advanceProjectPhase(p.name));
+
+  let penaltyValue = (p.sla && p.contractValue) ? ` (${fmtMoney((p.sla.penalty/100) * p.contractValue)})` : "";
+  document.getElementById("panel-sla").innerHTML = p.sla ? `
+    <div class="mini-stat"><span>Cumulative penalty</span><span>${p.sla.penalty}% ${penaltyValue}</span></div>
+    <div class="mini-stat"><span>Compliance status</span><span><span class="status-pill ${statusClass(p.sla.status)}">${p.sla.status}</span></span></div>
+    <div class="mini-stat"><span>Penalty cap</span><span>20%</span></div>
+  ` : `<div class="pending-note">SLA monitoring pending for this project.</div>`;
+
+  document.getElementById("panel-risk").innerHTML = `
+    <div class="mini-stat"><span>Critical flags</span><span>${p.risk.critical}</span></div>
+    <div class="mini-stat"><span>High flags</span><span>${p.risk.high}</span></div>
+    <div class="mini-stat"><span>Medium flags</span><span>${p.risk.medium}</span></div>
+    <div class="mini-stat"><span>Low flags</span><span>${p.risk.low}</span></div>
+    ${p.predictive ? `<div class="pending-note" style="margin-top:12px;">Forecast: <strong style="color:var(--text)">${p.predictive.milestone}</strong> due ${p.predictive.deadline}, forecasted ${p.predictive.forecast || "pending data"} — <span class="status-pill ${statusClass(p.predictive.risk)}" style="margin-left:2px;">${p.predictive.risk || "Pending"}</span></div>` : ""}
+  `;
+
+  document.querySelectorAll(".drawer-tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".drawer-panel").forEach(t=>t.classList.remove("active"));
+  const tabToShow = defaultTab || "output";
+  document.querySelector(`.drawer-tab[data-tab="${tabToShow}"]`).classList.add("active");
+  document.getElementById(`panel-${tabToShow}`).classList.add("active");
+
+  document.getElementById("drawer").classList.add("open");
+  document.getElementById("drawer-overlay").classList.add("open");
+}
+
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("open");
+  document.getElementById("drawer-overlay").classList.remove("open");
+}
+document.getElementById("drawer-close").addEventListener("click", closeDrawer);
+document.getElementById("drawer-overlay").addEventListener("click", closeDrawer);
+document.getElementById("drawer-edit").addEventListener("click", ()=>{ const name = document.getElementById("drawer-title").textContent; if(name && name !== "Project") openEditModal(name); });
+document.getElementById("drawer-delete").addEventListener("click", ()=>{ const name = document.getElementById("drawer-title").textContent; if(name && name !== "Project") deleteProject(name); });
+document.querySelectorAll(".drawer-tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".drawer-tab").forEach(t=>t.classList.remove("active"));
+    document.querySelectorAll(".drawer-panel").forEach(t=>t.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById(`panel-${tab.dataset.tab}`).classList.add("active");
+  });
+});
+
+/* =========================================================
+   SIDEBAR TOGGLE & NAVIGATION
+   ========================================================= */
+const sidebarToggle = document.getElementById("sidebar-toggle");
+const sidebarEl = document.getElementById("sidebar");
+let sidebarCollapsed = false;
+
+sidebarToggle.addEventListener("click", ()=>{
+  sidebarCollapsed = !sidebarCollapsed;
+  sidebarEl.classList.toggle("collapsed", sidebarCollapsed);
+  sidebarToggle.classList.toggle("collapsed", sidebarCollapsed);
+  setTimeout(()=>{ if(chartAchv) chartAchv.resize(); if(chartTrend) chartTrend.resize(); if(chartPenalty) chartPenalty.resize(); }, 260);
+});
+
+const VIEW_LABELS = { portfolio:"Portfolio Overview", milestones:"Progress & Milestones", sla:"SLA Compliance", risk:"Risk & Early Warning", predictive:"Predictive Insights" };
+document.querySelectorAll(".nav-item").forEach(item=>{
+  item.addEventListener("click", ()=>{
+    document.querySelectorAll(".nav-item").forEach(i=>i.classList.remove("active"));
+    item.classList.add("active");
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    document.getElementById("view-"+item.dataset.view).classList.add("active");
+    const bc = document.getElementById("breadcrumb");
+    bc.innerHTML = `<span class="crumb" onclick="document.querySelector('.nav-item[data-view=\\'portfolio\\']').click()">Portfolio</span> › <span class="crumb current">${VIEW_LABELS[item.dataset.view]}</span>`;
+  });
+});
+
+/* =========================================================
+   CLOCK
+   ========================================================= */
+function tickClock(){
+  const now = new Date();
+  document.getElementById("clock").textContent = "LAST SYNCED " + now.toLocaleDateString("en-US",{day:"2-digit",month:"short",year:"numeric"}) + " " + now.toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit",second:"2-digit"});
+}
+setInterval(tickClock, 1000); tickClock();
+
+/* =========================================================
+   ADD PROJECT (Manual)
+   ========================================================= */
+const fabAdd = document.getElementById("fab-add");
+const modalOverlay = document.getElementById("modal-overlay");
+const addForm = document.getElementById("add-project-form");
+const formError = document.getElementById("form-error");
+
+function openModal(){
+  addForm.reset();
+  formError.textContent = "";
+  ["f-name","f-target","f-installed","f-penalty","f-reqrate","f-currate","f-contractvalue","f-budget-alloc","f-budget-spent","f-pred-milestone","f-pred-deadline"].forEach(id => { const el = document.getElementById(id); if(el) el.style.borderColor = "var(--border)"; });
+  editingProjectName = null;
+  document.getElementById("f-name").disabled = false;
+  document.querySelector(".modal-head h2").textContent = "Add Project";
+  document.getElementById("modal-submit").textContent = "Add project";
+  document.getElementById("f-stage").value = "Execution";
+  document.getElementById("f-metric").value = "Units";
+  document.getElementById("metric-custom-row").style.display = "none";
+  resetImportPanel();
+  switchModalTab("manual");
+  modalOverlay.classList.add("open");
+  setTimeout(()=> document.getElementById("f-name").focus(), 50);
+}
+function closeModal(){ modalOverlay.classList.remove("open"); }
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(()=> t.classList.remove("show"), 2600);
+}
+function clearFieldError(id){ const el = document.getElementById(id); if(el) el.style.borderColor = "var(--border)"; }
+function setFieldError(id){ const el = document.getElementById(id); if(el) el.style.borderColor = "var(--red)"; }
+
+fabAdd.addEventListener("click", openModal);
+document.getElementById("modal-submit").addEventListener("click", ()=>{ if(addForm.requestSubmit){ addForm.requestSubmit(); } else { addForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })); } });
+document.getElementById("modal-close").addEventListener("click", closeModal);
+document.getElementById("modal-cancel").addEventListener("click", closeModal);
+document.getElementById("modal-cancel-2").addEventListener("click", closeModal);
+modalOverlay.addEventListener("click", (e)=>{ if(e.target === modalOverlay) closeModal(); });
+
+function switchModalTab(tab){
+  document.querySelectorAll(".modal-tab").forEach(t=>t.classList.toggle("active", t.dataset.modalTab === tab));
+  document.querySelectorAll(".modal-panel").forEach(p=>p.classList.remove("active"));
+  document.getElementById(`modal-panel-${tab}`).classList.add("active");
+  document.querySelectorAll(".modal-foot-actions").forEach(f=>{ f.style.display = f.dataset.foot === tab ? "flex" : "none"; });
+}
+document.querySelectorAll(".modal-tab").forEach(tab=>{ tab.addEventListener("click", ()=> switchModalTab(tab.dataset.modalTab)); });
+document.getElementById("f-metric").addEventListener("change", (e)=>{ document.getElementById("metric-custom-row").style.display = e.target.value === "__custom" ? "grid" : "none"; });
+
+function deriveStatusFromAchv(achv){ return achv >= 95 ? "On Track" : achv >= 85 ? "At Risk" : "Delayed"; }
+
+addForm.addEventListener("submit", (e)=>{
+  e.preventDefault(); e.stopPropagation(); formError.textContent = "";
+  ["f-name","f-target","f-installed","f-penalty","f-reqrate","f-currate","f-contractvalue","f-budget-alloc","f-budget-spent","f-pred-milestone","f-pred-deadline"].forEach(clearFieldError);
+
+  const val = id => document.getElementById(id).value.trim();
+  const num = id => { const v = val(id); return v === "" ? null : Number(v); };
+
+  const name = val("f-name");
+  if(!name){ formError.textContent = "Enter a project name."; setFieldError("f-name"); return; }
+  
+  const strategicPillar = val("f-strategic");
+  const trend = val("f-trend");
+  const contractValue = num("f-contractvalue");
+  const budgetAlloc = num("f-budget-alloc");
+  const budgetSpent = num("f-budget-spent");
+
+  const target = num("f-target"); const installed = num("f-installed"); const penalty = num("f-penalty");
+  const reqRate = num("f-reqrate"); const curRate = num("f-currate");
+
+  if(target !== null && target <= 0){ formError.textContent = "Planned units must be > 0."; setFieldError("f-target"); return; }
+  if(target !== null && installed !== null && installed > target){ formError.textContent = "Completed amount cannot exceed planned amount."; setFieldError("f-installed"); return; }
+  if(penalty !== null && penalty > 20){ formError.textContent = "SLA penalty cannot exceed 20% cap."; setFieldError("f-penalty"); return; }
+
+  let output = null;
+  if(target !== null && installed !== null){
+    const achv = Math.round((installed / target) * 100);
+    const m = val("f-metric");
+    output = { target, installed, achv, reqRate: reqRate??0, curRate: curRate??0, metric: m==="__custom"?val("f-metric-custom"):m, status: deriveStatusFromAchv(achv) };
+  }
+  
+  const milestone = val("f-stage") && val("f-mstatus") ? { stage: val("f-stage"), status: val("f-mstatus") } : null;
+  const sla = penalty !== null && val("f-slastatus") ? { penalty, status: val("f-slastatus") } : null;
+  const risk = { critical: num("f-critical")??0, high: num("f-high")??0, medium: num("f-medium")??0, low: num("f-low")??0 };
+  
+  const predMilestone = val("f-pred-milestone");
+  const predDeadline = val("f-pred-deadline");
+  const predictive = predMilestone ? { milestone: predMilestone, deadline: predDeadline, forecast: "", risk: "" } : null;
+
+  const project = { 
+    name, strategicPillar, trend, contractValue,
+    budget: budgetAlloc !== null ? { allocated: budgetAlloc, spent: budgetSpent??0 } : null,
+    output, milestone, sla, risk, predictive, overall: "amber" 
+  };
+
+  if(editingProjectName){
+    const idx = PROJECTS.findIndex(p => p.name === editingProjectName);
+    if(idx > -1){
+      PROJECTS[idx] = project; renderAll(); closeModal(); showToast(`${name} updated`);
+      if(document.getElementById("drawer").classList.contains("open")) openDrawer(name);
+    }
+  } else {
+    if(PROJECTS.some(p => p.name.toLowerCase() === name.toLowerCase())){ formError.textContent = "A project with this name already exists."; setFieldError("f-name"); return; }
+    PROJECTS.push(project); renderAll(); closeModal(); showToast(`${name} added to the portfolio`);
+  }
+});
+
+/* =========================================================
+   EXCEL IMPORT LOGIC
+   ========================================================= */
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("f-excel");
+const importStatus = document.getElementById("import-status");
+const importPreview = document.getElementById("import-preview");
+const importConfirmBtn = document.getElementById("import-confirm");
+let pendingImportRows = null;
+
+dropzone.addEventListener("click", ()=> fileInput.click());
+dropzone.addEventListener("dragover", (e)=>{ e.preventDefault(); dropzone.classList.add("dragover"); });
+dropzone.addEventListener("dragleave", ()=> dropzone.classList.remove("dragover"));
+dropzone.addEventListener("drop", (e)=>{
+  e.preventDefault();
+  dropzone.classList.remove("dragover");
+  if(e.dataTransfer.files.length) handleExcelFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener("change", (e)=>{
+  if(e.target.files.length) handleExcelFile(e.target.files[0]);
+});
+
+function resetImportPanel(){
+  pendingImportRows = null;
+  importStatus.textContent = "";
+  importStatus.className = "import-status";
+  importPreview.style.display = "none";
+  importPreview.innerHTML = "";
+  importConfirmBtn.disabled = true;
+  importConfirmBtn.textContent = "Import project";
+  fileInput.value = "";
+}
+
+function normKey(k){ return String(k).toLowerCase().replace(/[^a-z0-9]/g, ""); }
+
+const FIELD_MAP = {
+  name: ["project","projectname","name"],
+  strategicPillar: ["strategicpillar", "pillar", "strategy", "alignment"],
+  trend: ["currenttrajectory", "trajectory", "trend"],
+  contractValue: ["contractvalue", "totalcontractvalue", "businessvalue"],
+  budgetAlloc: ["budgetallocated", "budget", "allocatedbudget"],
+  budgetSpent: ["budgetspent", "spent"],
+  target: ["target","plannedunits","planned"],
+  installed: ["installed","completed","actual"],
+  reqRate: ["requiredrate","reqrate","requiredpace","reqpace"],
+  curRate: ["currentrate","currate","currentpace","curpace"],
+  metric: ["metric","progressmetric","unit"],
+  stage: ["milestonestage","currentstage"],
+  mStatus: ["milestonestatus"],
+  penalty: ["slapenalty","penalty","cumulativepenalty"],
+  slaStatus: ["slastatus","compliancestatus"],
+  critical: ["critical","criticalflags"],
+  high: ["high","highflags"],
+  medium: ["medium","mediumflags"],
+  low: ["low","lowflags"],
+  predMilestone: ["predictivemilestone","forecastmilestone","targetmilestonename"],
+  predDeadline: ["predictivedeadline","deadline","targetdeadline"]
+};
+
+function extractFieldsFromWorkbook(wb){
+  const fields = {};
+  wb.SheetNames.forEach(sheetName=>{
+    const sheet = wb.Sheets[sheetName];
+    const aoa = XLSX.utils.sheet_to_json(sheet, {header:1, defval:""});
+    for(let i=1; i<aoa.length; i++){ 
+      const row = aoa[i];
+      const rawField = row[0];
+      const rawValue = row[1];
+      if(rawField === undefined || rawField === "") continue;
+      const key = normKey(rawField);
+      if(!(key in fields) && rawValue !== undefined && rawValue !== ""){
+        fields[key] = rawValue;
+      }
+    }
+  });
+  return fields;
+}
+
+function fieldVal(fields, field){ for(const cand of FIELD_MAP[field]){ if(cand in fields) return fields[cand]; } return null; }
+function fieldNum(fields, field){ const v = fieldVal(fields, field); if(v === null) return null; const n = Number(v); return isNaN(n) ? null : n; }
+function fieldStr(fields, field){ const v = fieldVal(fields, field); return v === null ? "" : String(v).trim(); }
+
+function renderImportPreview(p){
+  importPreview.innerHTML = `
+    <div class="import-preview-head">
+      <span class="ip-name">${p.name}</span>
+      <span class="status-pill ${p.overall}">${p.overall==="red"?"Critical":p.overall==="amber"?"At Risk":"On Track"}</span>
+    </div>
+    
+    <div class="import-preview-section">Overview & Financials</div>
+    <div class="mini-stat"><span>Strategic Pillar</span><span>${p.strategicPillar}</span></div>
+    <div class="mini-stat"><span>Trajectory</span><span>${p.trend}</span></div>
+    ${p.contractValue ? `<div class="mini-stat"><span>Contract Value</span><span>${fmtMoney(p.contractValue)}</span></div>` : ''}
+    ${p.budget ? `<div class="mini-stat"><span>Budget</span><span>Spent ${fmtMoney(p.budget.spent)} of ${fmtMoney(p.budget.allocated)}</span></div>` : ''}
+
+    <div class="import-preview-section">Progress</div>
+    ${p.output ? `
+      <div class="mini-stat"><span>${p.output.metric}</span><span>${fmt(p.output.installed)} / ${fmt(p.output.target)} (${p.output.achv}%)</span></div>
+      <div class="mini-stat"><span>Pace (req. / cur.)</span><span>${fmt(p.output.reqRate)} / ${fmt(p.output.curRate)} per day</span></div>
+      <div class="mini-stat"><span>Status</span><span><span class="status-pill ${statusClass(p.output.status)}">${p.output.status}</span></span></div>
+    ` : `<div class="mini-stat"><span>Not provided</span><span>—</span></div>`}
+
+    <div class="import-preview-section">Milestone</div>
+    ${p.milestone ? `<div class="mini-stat"><span>${p.milestone.stage}</span><span><span class="status-pill ${statusClass(p.milestone.status)}">${p.milestone.status}</span></span></div>` : `<div class="mini-stat"><span>Not provided</span><span>—</span></div>`}
+
+    <div class="import-preview-section">SLA</div>
+    ${p.sla ? `<div class="mini-stat"><span>Penalty</span><span>${p.sla.penalty}% · <span class="status-pill ${statusClass(p.sla.status)}">${p.sla.status}</span></span></div>` : `<div class="mini-stat"><span>Not provided</span><span>—</span></div>`}
+
+    <div class="import-preview-section">Risk Flags</div>
+    <div class="mini-stat"><span>Critical / High / Medium / Low</span><span>${p.risk.critical} / ${p.risk.high} / ${p.risk.medium} / ${p.risk.low}</span></div>
+    
+    <div class="import-preview-section">Predictive Insights</div>
+    ${p.predictive ? `<div class="mini-stat"><span>${p.predictive.milestone}</span><span>due ${p.predictive.deadline} · <span class="status-pill muted">Auto-calculated</span></span></div>` : `<div class="mini-stat"><span>Not provided</span><span>—</span></div>`}
+  `;
+}
+
+function handleExcelFile(file){
+  importStatus.className = "import-status";
+  importStatus.textContent = "Reading " + file.name + " …";
+  importPreview.style.display = "none";
+  importConfirmBtn.disabled = true;
+  pendingImportRows = null;
+
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const wb = XLSX.read(e.target.result, {type:"array"});
+      const fields = extractFieldsFromWorkbook(wb);
+
+      const name = fieldStr(fields, "name");
+      if(!name){
+        importStatus.className = "import-status err";
+        importStatus.textContent = "Couldn't find a Project Name field in this file.";
+        return;
+      }
+      if(PROJECTS.some(p => p.name.toLowerCase() === name.toLowerCase())){
+        importStatus.className = "import-status err";
+        importStatus.textContent = `A project named "${name}" already exists in the portfolio.`;
+        return;
+      }
+
+      const targetImp = fieldNum(fields,"target");
+      const installedImp = fieldNum(fields,"installed");
+      const penaltyImp = fieldNum(fields,"penalty");
+      if(targetImp !== null && installedImp !== null && installedImp > targetImp){
+        importStatus.className = "import-status err";
+        importStatus.textContent = "Validation error: Completed amount exceeds planned amount.";
+        return;
+      }
+      if(penaltyImp !== null && penaltyImp > 20){
+        importStatus.className = "import-status err";
+        importStatus.textContent = "Validation error: SLA penalty exceeds the 20% contract cap.";
+        return;
+      }
+      
+      let output = null;
+      if(targetImp !== null && installedImp !== null){
+        const achv = Math.round((installedImp / targetImp) * 100);
+        output = { target: targetImp, installed: installedImp, achv, reqRate: fieldNum(fields,"reqRate")??0, curRate: fieldNum(fields,"curRate")??0, metric: fieldStr(fields,"metric")||"Units", status: deriveStatusFromAchv(achv) };
+      }
+
+      const project = {
+        name,
+        strategicPillar: fieldStr(fields, "strategicPillar") || "Revenue Growth",
+        trend: fieldStr(fields, "trend") || "flat",
+        contractValue: fieldNum(fields, "contractValue"),
+        budget: fieldNum(fields, "budgetAlloc") !== null ? { allocated: fieldNum(fields, "budgetAlloc"), spent: fieldNum(fields, "budgetSpent") || 0 } : null,
+        output: output,
+        milestone: fieldStr(fields,"stage") && fieldStr(fields,"mStatus") ? { stage: fieldStr(fields,"stage"), status: fieldStr(fields,"mStatus") } : null,
+        sla: penaltyImp !== null && fieldStr(fields,"slaStatus") ? { penalty: penaltyImp, status: fieldStr(fields,"slaStatus") } : null,
+        risk: { critical: fieldNum(fields,"critical")??0, high: fieldNum(fields,"high")??0, medium: fieldNum(fields,"medium")??0, low: fieldNum(fields,"low")??0 },
+        predictive: fieldStr(fields,"predMilestone") ? { milestone: fieldStr(fields,"predMilestone"), deadline: fieldStr(fields,"predDeadline"), forecast: "", risk: "" } : null,
+        overall: "amber"
+      };
+      
+      project.overall = computeOverall(project);
+      pendingImportRows = project;
+      importStatus.textContent = `Parsed "${name}" — review below, then confirm.`;
+      renderImportPreview(project);
+      importPreview.style.display = "block";
+      importConfirmBtn.disabled = false;
+
+    }catch(err){
+      importStatus.className = "import-status err";
+      importStatus.textContent = "Couldn't read that file — make sure it's a valid .xlsx, .xls or .csv.";
+    }
+  };
+  reader.onerror = ()=>{
+    importStatus.className = "import-status err";
+    importStatus.textContent = "Couldn't read that file.";
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+importConfirmBtn.addEventListener("click", ()=>{
+  if(!pendingImportRows) return;
+  const p = pendingImportRows;
+  PROJECTS.push(p);
+  renderAll();
+  closeModal();
+  showToast(`${p.name} imported from file`);
+});
+
+document.getElementById("download-template").addEventListener("click", ()=>{
+  const wb = XLSX.utils.book_new();
+  const addSheet = (sheetName, rows)=>{
+    const ws = XLSX.utils.aoa_to_sheet([["Field","Value"], ...rows]);
+    ws["!cols"] = [{wch:25},{wch:25}];
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  };
+  addSheet("Overview", [
+    ["Project Name",""],
+    ["Strategic Pillar",""],
+    ["Current Trajectory",""],
+    ["Contract Value", ""],
+    ["Budget Allocated", ""],
+    ["Budget Spent", ""]
+  ]);
+  addSheet("Progress", [
+    ["Metric",""], ["Planned",""], ["Completed",""],
+    ["Required Pace",""], ["Current Pace",""]
+  ]);
+  addSheet("Milestone", [["Milestone Stage",""], ["Milestone Status",""]]);
+  addSheet("SLA", [["SLA Penalty",""], ["SLA Status",""]]);
+  addSheet("Risk", [["Critical",""], ["High",""], ["Medium",""], ["Low",""]]);
+  addSheet("Predictive", [
+    ["Predictive Milestone",""], ["Predictive Deadline",""]
+  ]);
+  XLSX.writeFile(wb, "project_template.xlsx");
+});
+
+/* =========================================================
+   INIT
+   ========================================================= */
+renderPipeline();
+renderInsightPipeline();
+renderSlaParams();
+renderAll();
+</script>
+</body>
+</html>
